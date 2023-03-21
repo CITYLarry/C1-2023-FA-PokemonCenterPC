@@ -14,6 +14,7 @@ public class PokemonDTO {
     private String pkmnId;
     private String pkdxNumber;
     private String name;
+    private String nickname;
     private List<String> typeList;
     private Boolean inTeam;
 }

@@ -19,6 +19,7 @@ public class Pokemon {
     private String pkmnId = "PKMN-" + UUID.randomUUID().toString().substring(0, 5);
     private String pkdxNumber;
     private String name;
+    private String nickname = name;
     private List<String> typeList;
     private Boolean inTeam = false;
 }
