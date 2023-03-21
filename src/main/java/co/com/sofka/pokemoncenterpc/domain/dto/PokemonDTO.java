@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PokemonDTO {
 
-    private String id;
+    private String pkmnId;
     private String pkdxNumber;
     private String name;
     private List<String> typeList;

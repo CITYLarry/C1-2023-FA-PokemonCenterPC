@@ -16,7 +16,7 @@ import java.util.UUID;
 public class Pokemon {
 
     @Id
-    private String id = "PKM-" + UUID.randomUUID().toString().substring(0, 5);
+    private String pkmnId = "PKMN-" + UUID.randomUUID().toString().substring(0, 5);
     private String pkdxNumber;
     private String name;
     private List<String> typeList;
