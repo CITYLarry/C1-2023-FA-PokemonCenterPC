@@ -35,21 +35,6 @@ public class PokemonRouter {
     }
 
     @Bean
-    public RouterFunction<ServerResponse> updatePokemon(UpdatePokemonUseCase updatePokemonUseCase) {
-        return route(
-                PUT("/pokemon_pc/{pkmnId}").and(accept(MediaType.APPLICATION_JSON)),
-                request -> request.bodyToMono(PokemonDTO.class)
-                        .flatMap(pokemonDTO -> updatePokemonUseCase.update(request.pathVariable("pkmnId"), pokemonDTO)
-                                .flatMap(result -> ServerResponse.ok()
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .bodyValue(result))
-                                .onErrorResume(throwable -> ServerResponse.badRequest()
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .bodyValue(throwable.getMessage())))
-        );
-    }
-
-    @Bean
     public RouterFunction<ServerResponse> getPokemonById(GetPokemonByIdUseCase getPokemonByIdUseCase) {
         return route(
                 GET("/pokemon_pc/{pkmnId}"),
@@ -73,6 +58,21 @@ public class PokemonRouter {
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .bodyValue(result))
                                 .onErrorResume(throwable -> ServerResponse.badRequest().build()))
+        );
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> updatePokemon(UpdatePokemonUseCase updatePokemonUseCase) {
+        return route(
+                PUT("/pokemon_pc/{pkmnId}").and(accept(MediaType.APPLICATION_JSON)),
+                request -> request.bodyToMono(PokemonDTO.class)
+                        .flatMap(pokemonDTO -> updatePokemonUseCase.update(request.pathVariable("pkmnId"), pokemonDTO)
+                                .flatMap(result -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(result))
+                                .onErrorResume(throwable -> ServerResponse.badRequest()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(throwable.getMessage())))
         );
     }
 
