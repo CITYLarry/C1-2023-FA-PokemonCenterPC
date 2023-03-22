@@ -49,7 +49,7 @@ class GetPokemonByIdUseCaseTest {
     }
 
     @Test
-    @DisplayName("Get pokemon by Id fail")
+    @DisplayName("Get pokemon - pokemon not found")
     void failScenario() {
 
         Mockito.when(pokemonRepository.findById("testId")).thenReturn(Mono.empty());

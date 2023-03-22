@@ -17,46 +17,51 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
-class DeletePokemonUseCaseTest {
+class UpdatePokemonUseCaseTest {
 
     @Mock
     IPokemonRepository pokemonRepository;
 
     ModelMapper modelMapper;
-    DeletePokemonUseCase deletePokemonUseCase;
+    UpdatePokemonUseCase updatePokemonUseCase;
 
     @BeforeEach
     void setup() {
         modelMapper = new ModelMapper();
-        deletePokemonUseCase = new DeletePokemonUseCase(pokemonRepository, modelMapper);
+        updatePokemonUseCase = new UpdatePokemonUseCase(pokemonRepository, modelMapper);
     }
 
     @Test
-    @DisplayName("Delete pokemon successfully")
+    @DisplayName("Update pokemon successfully")
     void successScenario() {
 
         Pokemon p1 = new Pokemon("testId", "testNmbr", "testName", "testNick", List.of("testType"), false);
 
         Mockito.when(pokemonRepository.findById("testId")).thenReturn(Mono.just(p1));
-        Mockito.when(pokemonRepository.deleteById("testId")).thenReturn(Mono.empty());
 
-        var result = deletePokemonUseCase.delete("testId");
+        Pokemon p2 = new Pokemon("testId", "testNmbr2", "testName2", "testNick2", List.of("testType2"), true);
+
+        Mockito.when(pokemonRepository.save(p2)).thenReturn(Mono.just(p2));
+
+        var result = updatePokemonUseCase.update(
+                "testId",
+                new PokemonDTO("testId", "testNmbr2", "testName2", "testNick2", List.of("testType2"), true)
+        );
 
         StepVerifier.create(result)
-                .expectComplete()
-                .verify();
+                .expectNext(new PokemonDTO("testId", "testNmbr2", "testName2", "testNick2", List.of("testType2"), true))
+                .verifyComplete();
 
         Mockito.verify(pokemonRepository).findById("testId");
-        Mockito.verify(pokemonRepository).deleteById("testId");
     }
 
     @Test
-    @DisplayName("Delete pokemon - pokemon not found")
+    @DisplayName("Update pokemon - pokemon not found")
     void failScenario() {
 
         Mockito.when(pokemonRepository.findById("testId")).thenReturn(Mono.empty());
 
-        var result = deletePokemonUseCase.delete("testId");
+        var result = updatePokemonUseCase.update("testId", new PokemonDTO());
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable.getMessage().equals("No pokemon found for id testId"))
