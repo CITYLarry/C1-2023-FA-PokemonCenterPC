@@ -2,6 +2,7 @@ package co.com.sofka.pokemoncenterpc.router;
 
 import co.com.sofka.pokemoncenterpc.domain.dto.PokemonDTO;
 import co.com.sofka.pokemoncenterpc.usecases.GetAllPokemonUseCase;
+import co.com.sofka.pokemoncenterpc.usecases.GetPokemonByIdUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.SavePokemonUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,20 @@ public class PokemonRouter {
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(BodyInserters.fromPublisher(getAllPokemonUseCase.getAll(), PokemonDTO.class))
                         .onErrorResume(throwable -> ServerResponse.noContent().build())
+        );
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> getPokemonById(GetPokemonByIdUseCase getPokemonByIdUseCase) {
+        return route(
+                GET("/pokemon_pc/{pkmnId}"),
+                request -> getPokemonByIdUseCase.getPokemon(request.pathVariable("pkmnId"))
+                        .flatMap(pokemonDTO -> ServerResponse.ok()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(pokemonDTO))
+                        .onErrorResume(throwable -> ServerResponse.badRequest()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage()))
         );
     }
 
