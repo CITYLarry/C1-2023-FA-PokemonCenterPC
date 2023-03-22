@@ -17,44 +17,46 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
-class GetPokemonByIdUseCaseTest {
+class DeletePokemonUseCaseTest {
 
     @Mock
     IPokemonRepository pokemonRepository;
 
     ModelMapper modelMapper;
-    GetPokemonByIdUseCase getPokemonByIdUseCase;
+    DeletePokemonUseCase deletePokemonUseCase;
 
     @BeforeEach
     void setup() {
         modelMapper = new ModelMapper();
-        getPokemonByIdUseCase = new GetPokemonByIdUseCase(pokemonRepository, modelMapper);
+        deletePokemonUseCase = new DeletePokemonUseCase(pokemonRepository, modelMapper);
     }
 
     @Test
-    @DisplayName("Get pokemon by Id successfully")
+    @DisplayName("Delete pokemon successfully")
     void successScenario() {
 
         Pokemon p1 = new Pokemon("testId", "testNmbr", "testName", "testNick", List.of("testType"), false);
 
         Mockito.when(pokemonRepository.findById("testId")).thenReturn(Mono.just(p1));
+        Mockito.when(pokemonRepository.deleteById("testId")).thenReturn(Mono.empty());
 
-        var result = getPokemonByIdUseCase.getPokemon("testId");
+        var result = deletePokemonUseCase.delete("testId");
 
         StepVerifier.create(result)
-                .expectNext(new PokemonDTO("testId", "testNmbr", "testName", "testNick", List.of("testType"), false))
-                .verifyComplete();
+                .expectComplete()
+                .verify();
 
         Mockito.verify(pokemonRepository).findById("testId");
+        Mockito.verify(pokemonRepository).deleteById("testId");
     }
 
     @Test
-    @DisplayName("Get pokemon by Id fail")
+    @DisplayName("Delete pokemon fail")
     void failScenario() {
 
         Mockito.when(pokemonRepository.findById("testId")).thenReturn(Mono.empty());
 
-        var result = getPokemonByIdUseCase.getPokemon("testId");
+        var result = deletePokemonUseCase.delete("testId");
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable -> throwable.getMessage().equals("No pokemon found for id testId"))
