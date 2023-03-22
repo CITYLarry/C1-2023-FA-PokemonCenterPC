@@ -1,6 +1,7 @@
 package co.com.sofka.pokemoncenterpc.router;
 
 import co.com.sofka.pokemoncenterpc.domain.dto.PokemonDTO;
+import co.com.sofka.pokemoncenterpc.usecases.DeletePokemonUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.GetAllPokemonUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.GetPokemonByIdUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.SavePokemonUseCase;
@@ -11,6 +12,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import static org.springframework.web.reactive.function.server.RequestPredicates.DELETE;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
@@ -54,6 +56,21 @@ public class PokemonRouter {
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .bodyValue(result))
                                 .onErrorResume(throwable -> ServerResponse.badRequest().build()))
+        );
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> deletePokemon(DeletePokemonUseCase deletePokemonUseCase) {
+        return route(
+                DELETE("/pokemon_pc/{pkmnId}"),
+                request -> deletePokemonUseCase.delete(request.pathVariable("pkmnId"))
+                        .thenReturn(ServerResponse.ok()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue("Deleted Pokemon with id: " + request.pathVariable("pkmnId")))
+                        .flatMap(response -> response)
+                        .onErrorResume(throwable -> ServerResponse.badRequest()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage()))
         );
     }
 }
