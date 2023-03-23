@@ -7,6 +7,7 @@ import co.com.sofka.pokemoncenterpc.usecases.GetAllPokemonUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.GetPokemonByIdUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.MoveToBeltUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.SavePokemonUseCase;
+import co.com.sofka.pokemoncenterpc.usecases.TransferToPcUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.UpdatePokemonUseCase;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -99,6 +100,24 @@ public class PokemonRouter {
                         .retrieve()
                         .bodyToMono(TrainerDTO.class)
                         .flatMap(trainerDTO -> moveToBeltUseCase.moveToBelt(trainerDTO.getTrnrId(), request.pathVariable("pkmnId"))
+                                .flatMap(pokemonDTO -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(pokemonDTO))
+                                .onErrorResume(throwable -> ServerResponse.badRequest()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(throwable.getMessage())))
+        );
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> transferPokemonToPc(TransferToPcUseCase transferToPcUseCase) {
+        return route(
+                POST("/pokemon_pc/{pkmnId}/transfer_to_pc/{trnrId}"),
+                request -> trainersAPI.get()
+                        .uri("/trainers/" + request.pathVariable("trnrId"))
+                        .retrieve()
+                        .bodyToMono(TrainerDTO.class)
+                        .flatMap(trainerDTO -> transferToPcUseCase.transferToPc(trainerDTO.getTrnrId(), request.pathVariable("pkmnId"))
                                 .flatMap(pokemonDTO -> ServerResponse.ok()
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .bodyValue(pokemonDTO))
