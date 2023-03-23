@@ -1,17 +1,27 @@
 package co.com.sofka.pokemoncenterpc.router;
 
 import co.com.sofka.pokemoncenterpc.domain.dto.PokemonDTO;
+import co.com.sofka.pokemoncenterpc.domain.dto.TrainerDTO;
 import co.com.sofka.pokemoncenterpc.usecases.DeletePokemonUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.GetAllPokemonUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.GetPokemonByIdUseCase;
+import co.com.sofka.pokemoncenterpc.usecases.MoveToBeltUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.SavePokemonUseCase;
 import co.com.sofka.pokemoncenterpc.usecases.UpdatePokemonUseCase;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.DELETE;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
@@ -22,6 +32,12 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 
 @Configuration
 public class PokemonRouter {
+
+    private WebClient trainersAPI;
+
+    public PokemonRouter() {
+        trainersAPI = WebClient.create("http://localhost:8081");
+    }
 
     @Bean
     public RouterFunction<ServerResponse> getAllPokemon(GetAllPokemonUseCase getAllPokemonUseCase) {
@@ -57,7 +73,38 @@ public class PokemonRouter {
                                 .flatMap(result -> ServerResponse.status(201)
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .bodyValue(result))
-                                .onErrorResume(throwable -> ServerResponse.badRequest().build()))
+                                .onErrorResume(throwable -> {
+                                    if (throwable instanceof ConstraintViolationException ex) {
+                                        List<String> errors = ex.getConstraintViolations().stream()
+                                                .map(ConstraintViolation::getMessage)
+                                                .toList();
+                                        return ServerResponse.badRequest()
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .bodyValue(errors);
+                                    } else {
+                                        return ServerResponse.badRequest()
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .bodyValue(throwable.getMessage());
+                                    }
+                                }))
+        );
+    }
+
+    @Bean
+    public RouterFunction<ServerResponse> movePokemonToBelt(MoveToBeltUseCase moveToBeltUseCase) {
+        return route(
+                POST("/pokemon_pc/{pkmnId}/move_to_belt/{trnrId}"),
+                request -> trainersAPI.get()
+                        .uri("/trainers/" + request.pathVariable("trnrId"))
+                        .retrieve()
+                        .bodyToMono(TrainerDTO.class)
+                        .flatMap(trainerDTO -> moveToBeltUseCase.moveToBelt(trainerDTO.getTrnrId(), request.pathVariable("pkmnId"))
+                                .flatMap(pokemonDTO -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(pokemonDTO))
+                                .onErrorResume(throwable -> ServerResponse.badRequest()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(throwable.getMessage())))
         );
     }
 
@@ -70,9 +117,20 @@ public class PokemonRouter {
                                 .flatMap(result -> ServerResponse.ok()
                                         .contentType(MediaType.APPLICATION_JSON)
                                         .bodyValue(result))
-                                .onErrorResume(throwable -> ServerResponse.badRequest()
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .bodyValue(throwable.getMessage())))
+                                .onErrorResume(throwable -> {
+                                    if (throwable instanceof ConstraintViolationException ex) {
+                                        List<String> errors = ex.getConstraintViolations().stream()
+                                                .map(ConstraintViolation::getMessage)
+                                                .toList();
+                                        return ServerResponse.badRequest()
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .bodyValue(errors);
+                                    } else {
+                                        return ServerResponse.badRequest()
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .bodyValue(throwable.getMessage());
+                                    }
+                                }))
         );
     }
 
